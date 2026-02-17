@@ -8,6 +8,10 @@ function addProblem(req, res, next) {
   }
 }
 
+function pingProblemChecker(req, res) {
+  return res.json({ message: 'Ping controller is up' });
+}
+
 function getProblem(req, res) {
   return res.status(StatusCodes.NOT_IMPLEMENTED).json({
     message: 'Not Implemented',
@@ -29,6 +33,7 @@ function updateProblem(req, res) {
   });
 }
 module.exports = {
+  pingProblemChecker,
   addProblem,
   getProblem,
   getProblems,
