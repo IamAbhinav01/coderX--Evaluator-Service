@@ -1,0 +1,26 @@
+{
+  "name": "coderx",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/IamAbhinav01/coderX#readme",
+  "bugs": {
+    "url": "https://github.com/IamAbhinav01/coderX/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/IamAbhinav01/coderX.git"
+  },
+  "license": "MIT",
+  "author": "Abhinav Sunil",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "express": "^5.2.1",
+    "nodemon": "^3.1.11"
+  }
+}
