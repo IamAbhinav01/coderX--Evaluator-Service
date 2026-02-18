@@ -5,7 +5,7 @@ function markdownToHtml(markdown) {
   const turndownService = new TurndownService();
 
   const convertedMardown = marked.parse(markdown);
-  console.log('converted HTML', convertedMardown);
+  // console.log('converted HTML', convertedMardown);
 
   const sanitizedHtml = sanitizeHtml(convertedMardown, {
     allowedTags: sanitizeHtml.defaults.allowedTags.concat([
@@ -24,75 +24,75 @@ function markdownToHtml(markdown) {
       img: ['src', 'alt'],
     },
   });
-  console.log('Sanitised HTML', sanitizedHtml);
+  // console.log('Sanitised HTML', sanitizedHtml);
 
   const sanitizedMarkdown = turndownService.turndown(sanitizedHtml);
-  console.log('Turned Markdown', sanitizedMarkdown);
+  // console.log('Turned Markdown', sanitizedMarkdown);
 
   return sanitizedMarkdown;
 }
 
 module.exports = markdownToHtml;
-const input = `
+// const input = `
 
-# Two Sum
+// # Two Sum
 
-**Difficulty:** Easy
+// **Difficulty:** Easy
 
----
+// ---
 
-## Problem Statement
+// ## Problem Statement
 
-Given an array of integers \`nums\` and an integer \`target\`, return indices of the two numbers such that they add up to \`target\`.
+// Given an array of integers \`nums\` and an integer \`target\`, return indices of the two numbers such that they add up to \`target\`.
 
-You may assume that each input would have **exactly one solution**, and you may not use the same element twice.
+// You may assume that each input would have **exactly one solution**, and you may not use the same element twice.
 
-You can return the answer in **any order**.
+// You can return the answer in **any order**.
 
----
+// ---
 
-## Example 1:
+// ## Example 1:
 
-**Input:**
+// **Input:**
 
-nums = [2,7,11,15], target = 9
+// nums = [2,7,11,15], target = 9
 
-**Output:**
+// **Output:**
 
-[0,1]
+// [0,1]
 
-**Explanation:**
+// **Explanation:**
 
-Because nums[0] + nums[1] == 9, return [0,1].
+// Because nums[0] + nums[1] == 9, return [0,1].
 
----
+// ---
 
-## Example 2:
+// ## Example 2:
 
-**Input:**
+// **Input:**
 
-nums = [3,2,4], target = 6
+// nums = [3,2,4], target = 6
 
-**Output:**
+// **Output:**
 
-[1,2]
+// [1,2]
 
----
+// ---
 
-## Constraints:
+// ## Constraints:
 
-- 2 ≤ nums.length ≤ 10⁴
-- -10⁹ ≤ nums[i] ≤ 10⁹
-- -10⁹ ≤ target ≤ 10⁹
-- Only one valid answer exists.
+// - 2 ≤ nums.length ≤ 10⁴
+// - -10⁹ ≤ nums[i] ≤ 10⁹
+// - -10⁹ ≤ target ≤ 10⁹
+// - Only one valid answer exists.
 
----
+// ---
 
-## Function Signature
+// ## Function Signature
 
-\`\`\`cpp
-vector<int> twoSum(vector<int>& nums, int target);
-\`\`\`
+// \`\`\`cpp
+// vector<int> twoSum(vector<int>& nums, int target);
+// \`\`\`
 
-`;
-markdownToHtml(input);
+// `;
+// markdownToHtml(input);
