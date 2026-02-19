@@ -14,5 +14,13 @@ class ProblemRepository {
       throw new NotFoundError('Error in creating problem');
     }
   }
+  async getProblem(problemId) {
+    try {
+      const problem = await Problem.findById(problemId);
+      return problem;
+    } catch (err) {
+      throw new NotFoundError('Problem not found');
+    }
+  }
 }
 module.exports = ProblemRepository;
