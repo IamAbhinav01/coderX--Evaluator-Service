@@ -22,11 +22,29 @@ class ProblemRepository {
       throw new NotFoundError('Problem not found');
     }
   }
+  async getProblems() {
+    try {
+      const problems = await Problem.find({});
+      return problems;
+    } catch (err) {
+      throw new NotFoundError('Problems not found');
+    }
+  }
   async deleteProblem(problemId) {
     try {
       await Problem.deleteOne({
         _id: problemId,
       });
+    } catch (err) {
+      throw new NotFoundError('Problem not found');
+    }
+  }
+  async updateProblem(problemId, problemData) {
+    try {
+      const problem = await Problem.findByIdAndUpdate(problemId, problemData, {
+        new: true,
+      });
+      return problem;
     } catch (err) {
       throw new NotFoundError('Problem not found');
     }

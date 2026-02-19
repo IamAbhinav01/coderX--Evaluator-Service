@@ -34,5 +34,26 @@ class ProblemService {
       throw err;
     }
   }
+  async getProblems() {
+    try {
+      const problems = await this.problemRepository.getProblems();
+      return problems;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  }
+  async updateProblem(problemId, problemData) {
+    try {
+      const updatedProblem = await this.problemRepository.updateProblem(
+        problemId,
+        problemData
+      );
+      return updatedProblem;
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  }
 }
 module.exports = ProblemService;

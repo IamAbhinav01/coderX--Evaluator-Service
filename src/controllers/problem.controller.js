@@ -37,10 +37,17 @@ async function getProblem(req, res) {
     next(err);
   }
 }
-function getProblems(req, res) {
-  return res.status(StatusCodes.NOT_IMPLEMENTED).json({
-    message: 'Not Implemented',
-  });
+async function getProblems(req, res) {
+  try {
+    const problems = await problemService.getProblems();
+    return res.status(StatusCodes.OK).json({
+      Success: true,
+      Message: 'Problems fetched successfully',
+      data: problems,
+    });
+  } catch (err) {
+    next(err);
+  }
 }
 async function deleteProblem(req, res) {
   try {
@@ -54,9 +61,19 @@ async function deleteProblem(req, res) {
   }
 }
 function updateProblem(req, res) {
-  return res.status(StatusCodes.NOT_IMPLEMENTED).json({
-    message: 'Not Implemented',
-  });
+  try {
+    const updatedProblem = problemService.updateProblem(
+      req.params.id,
+      req.body
+    );
+    return res.status(StatusCodes.OK).json({
+      Success: true,
+      Message: 'Problem updated successfully',
+      data: updatedProblem,
+    });
+  } catch (err) {
+    next(err);
+  }
 }
 module.exports = {
   pingProblemChecker,
