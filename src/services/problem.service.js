@@ -26,5 +26,13 @@ class ProblemService {
       throw err;
     }
   }
+  async deleteProblem(problemId) {
+    try {
+      await this.problemRepository.deleteProblem(problemId);
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  }
 }
 module.exports = ProblemService;

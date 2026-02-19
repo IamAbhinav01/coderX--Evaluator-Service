@@ -22,5 +22,14 @@ class ProblemRepository {
       throw new NotFoundError('Problem not found');
     }
   }
+  async deleteProblem(problemId) {
+    try {
+      await Problem.deleteOne({
+        _id: problemId,
+      });
+    } catch (err) {
+      throw new NotFoundError('Problem not found');
+    }
+  }
 }
 module.exports = ProblemRepository;
