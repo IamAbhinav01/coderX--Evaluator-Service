@@ -1,7 +1,12 @@
 import express from 'express';
+import serverConfig from './config/server.config';
+import apiRouter from './routes';
+
+const PORT = serverConfig.PORT;
 
 const app = express();
-const PORT = 3000;
+
+app.use('/api', apiRouter);
 
 app.get('/', (req, res) => {
   res.send('Hello, TypeScript with Express!');
