@@ -2,7 +2,7 @@ const { problemController } = require('../../controllers');
 const express = require('express');
 const problemRouter = express.Router();
 
-problemRouter.get('/ping', problemController.pingProblemChecker);
+// problemRouter.get('/ping', problemController.pingProblemChecker);
 problemRouter.get('/', problemController.getProblems);
 problemRouter.get('/:id', problemController.getProblem);
 problemRouter.post('/', problemController.addProblem);
