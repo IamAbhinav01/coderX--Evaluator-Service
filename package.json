@@ -1,29 +1,46 @@
 {
-  "name": "coderx",
+  "name": "coderx_problemserive",
   "version": "1.0.0",
   "description": "",
-  "homepage": "https://github.com/IamAbhinav01/coderX#readme",
-  "bugs": {
-    "url": "https://github.com/IamAbhinav01/coderX/issues"
+  "main": "main.js",
+  "scripts": {
+    "start": "node dist/main.js",
+    "dev": "nodemon --exec ts-node src/main.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/IamAbhinav01/coderX.git"
+    "url": "git+https://github.com/IamAbhinav01/coderX--Evaluator-Service.git"
   },
-  "license": "MIT",
-  "author": "Abhinav Sunil",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "type": "commonjs",
-  "main": "index.js",
-  "scripts": {
-    "dev": "npx nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "bugs": {
+    "url": "https://github.com/IamAbhinav01/coderX--Evaluator-Service/issues"
   },
+  "homepage": "https://github.com/IamAbhinav01/coderX--Evaluator-Service#readme",
   "dependencies": {
-    "body-parser": "^2.2.2",
+    "@bull-board/api": "^6.20.3",
+    "@bull-board/express": "^6.20.3",
+    "bullmq": "^5.70.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "http-status-codes": "^2.3.0",
-    "nodemon": "^3.1.11",
-    "status-codes": "^0.0.1"
+    "ioredis": "^5.9.3",
+    "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/bull": "^3.15.9",
+    "@types/express": "^5.0.6",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1"
   }
 }
