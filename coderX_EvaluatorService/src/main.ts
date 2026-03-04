@@ -40,10 +40,10 @@ app.listen(serverConfig.PORT, async () => {
   SampleWorker('sample-Queue');
 
   // add job
-  await sampleQueueProducers('SampleJob', {
+  await sampleQueueProducers('emailQueue', {
     name: 'Abhinav',
     place: 'Kerala',
     college: 'LPU',
-    program: 'Btech',
+    program: 'Artificial INtelligence and Machine Learning',
   });
 });
