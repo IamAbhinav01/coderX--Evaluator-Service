@@ -6,6 +6,7 @@ import serverAdapter from './config/BullBoard.config';
 
 import sampleQueueProducers from './producers/sampleQueueProducers';
 import SampleWorker from './workers/sampleWorker';
+import runPython from './containers/runPythonDocker';
 
 const PORT = serverConfig.PORT;
 
@@ -23,11 +24,15 @@ app.listen(serverConfig.PORT, async () => {
   // start worker
   SampleWorker('paymentQueue');
 
+  const code = `a = input()
+print('hello World!',a)`;
+  const inputCase = `20`;
+  runPython(code, inputCase);
   // add job
-  await sampleQueueProducers('paymentQueue', {
-    name: 'Abhinav Sunil',
-    place: 'Jalndhar',
-    college: 'LPU',
-    program: 'Btech CSE Artificial INtelligence and Machine Learning',
-  });
+  // await sampleQueueProducers('paymentQueue', {
+  //   name: 'Abhinav Sunil',
+  //   place: 'Jalndhar',
+  //   college: 'LPU',
+  //   program: 'Btech CSE Artificial INtelligence and Machine Learning',
+  // });
 });
