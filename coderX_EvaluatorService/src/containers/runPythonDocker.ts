@@ -10,19 +10,14 @@ async function runPython(code: string, inputTestCase: string) {
 
   await pullImage(PYTHON_IMAGE);
 
-  const encodedCode = Buffer.from(code).toString('base64');
-  const encodedInput = Buffer.from(inputTestCase).toString('base64');
-
   const pythonDockerContainer = await createContainer(PYTHON_IMAGE, [
     'sh',
     '-c',
-    `echo ${encodedCode} | base64 -d > test.py && echo ${encodedInput} | base64 -d | python3 test.py`,
+    `echo '${code}' > test.py && echo '${inputTestCase}' | python3 test.py`,
   ]);
 
   await pythonDockerContainer.start();
   console.log(`started the docker container`);
-
-  await pythonDockerContainer.wait(); // IMPORTANT
 
   const loggerStream = await pythonDockerContainer.logs({
     stderr: true,
@@ -35,19 +30,20 @@ async function runPython(code: string, inputTestCase: string) {
     rawLogBuffer.push(data);
   });
 
-  await new Promise((res) => {
+  await new Promise((res, _) => {
     loggerStream.on('end', () => {
       const completeBuffer = Buffer.concat(rawLogBuffer);
 
-      console.log(completeBuffer.toString());
+      // console.log(completeBuffer.toString());
 
-      const decoded = decodeDockerStream(completeBuffer);
-      console.log(decoded);
+      const decodedStream = decodeDockerStream(completeBuffer);
+      console.log(decodedStream);
 
-      res(decoded);
+      res(decodedStream);
     });
   });
 
   await pythonDockerContainer.remove();
+  return pythonDockerContainer;
 }
 export default runPython;

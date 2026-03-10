@@ -25,7 +25,9 @@ app.listen(serverConfig.PORT, async () => {
   SampleWorker('paymentQueue');
 
   const code = `a = input()
-print('hello World!',a)`;
+print("hello World!",a)
+for i in range(20):
+  print(i)`;
   const inputCase = `20`;
   runPython(code, inputCase);
   // add job

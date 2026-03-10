@@ -22,7 +22,7 @@ function decodeDockerStream(buffer: Buffer): DockerStreamOutput {
   };
 
   while (offset < buffer.length) {
-    const channel = buffer[0];
+    const channel = buffer[offset];
     const length = buffer.readUInt32BE(offset + 4);
     const dataStart = offset + HEADER_SIZE;
     const dataEnd = dataStart + length;

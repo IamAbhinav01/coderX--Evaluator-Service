@@ -8,7 +8,7 @@ async function createContainer(imgName: string, cmdExecutable: string[]) {
     AttachStdin: true,
     AttachStdout: true,
     AttachStderr: true,
-    Tty: true,
+    Tty: false,
     OpenStdin: true,
   });
   return container;
