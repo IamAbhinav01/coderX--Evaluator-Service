@@ -7,6 +7,7 @@ import serverAdapter from './config/BullBoard.config';
 import sampleQueueProducers from './producers/sampleQueueProducers';
 import SampleWorker from './workers/sampleWorker';
 import runPython from './containers/runPythonDocker';
+import runCpp from './containers/runCppDocker';
 
 const PORT = serverConfig.PORT;
 
@@ -24,12 +25,22 @@ app.listen(serverConfig.PORT, async () => {
   // start worker
   SampleWorker('paymentQueue');
 
-  const code = `a = input()
-print("hello World!",a)
-for i in range(20):
-  print(i)`;
+  const code = `
+  #include<iostream>
+  using namespace std;
+  int main()
+  {
+      int a;
+      cin>>a;
+      cout<<"Hello World"<<a<<endl;
+      for(int i = 0;i<10;i++)
+      {
+        cout<<i<<" ";
+      }
+  }
+  `;
   const inputCase = `20`;
-  runPython(code, inputCase);
+  runCpp(code, inputCase);
   // add job
   // await sampleQueueProducers('paymentQueue', {
   //   name: 'Abhinav Sunil',
