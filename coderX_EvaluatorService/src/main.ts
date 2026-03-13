@@ -8,6 +8,7 @@ import sampleQueueProducers from './producers/sampleQueueProducers';
 import SampleWorker from './workers/sampleWorker';
 import runPython from './containers/runPythonDocker';
 import runCpp from './containers/runCppDocker';
+import runJava from './containers/runJava';
 
 const PORT = serverConfig.PORT;
 
@@ -24,23 +25,20 @@ app.listen(serverConfig.PORT, async () => {
 
   // start worker
   SampleWorker('paymentQueue');
-
   const code = `
-  #include<iostream>
-  using namespace std;
-  int main()
-  {
-      int a;
-      cin>>a;
-      cout<<"Hello World"<<a<<endl;
-      for(int i = 0;i<10;i++)
-      {
-        cout<<i<<" ";
-      }
-  }
-  `;
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        System.out.println("Input was: " + n);
+    }
+}
+`;
+
   const inputCase = `20`;
-  runCpp(code, inputCase);
+  runJava(code, inputCase);
   // add job
   // await sampleQueueProducers('paymentQueue', {
   //   name: 'Abhinav Sunil',

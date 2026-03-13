@@ -1,4 +1,3 @@
-import { raw } from 'express';
 import { CPP_IMAGE } from '../utils/constants';
 import createContainer from './containerFactory';
 import pullImage from './pullImage';
