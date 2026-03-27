@@ -26,19 +26,12 @@ app.listen(serverConfig.PORT, async () => {
   // start worker
   SampleWorker('paymentQueue');
   const code = `
-import java.util.*;
-
-public class Main {
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int n = sc.nextInt();
-        System.out.println("Input was: " + n);
-    }
-}
+a = input()
+print("hello world,a)
 `;
 
   const inputCase = `20`;
-  runJava(code, inputCase);
+  runPython(code, inputCase);
   // add job
   // await sampleQueueProducers('paymentQueue', {
   //   name: 'Abhinav Sunil',
