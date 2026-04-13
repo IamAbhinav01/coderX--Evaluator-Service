@@ -6,9 +6,9 @@ import serverAdapter from './config/BullBoard.config';
 
 import sampleQueueProducers from './producers/sampleQueueProducers';
 import SampleWorker from './workers/sampleWorker';
-import runPython from './containers/runPythonDocker';
-import runCpp from './containers/runCppDocker';
-import runJava from './containers/runJava';
+import execute from './containers/pythonExecutor';
+import runCpp from './containers/cppExecutor';
+import runJava from './containers/javaExecutor';
 
 const PORT = serverConfig.PORT;
 
@@ -31,7 +31,7 @@ print("hello world,a)
 `;
 
   const inputCase = `20`;
-  runPython(code, inputCase);
+  // execute(code, inputCase);
   // add job
   // await sampleQueueProducers('paymentQueue', {
   //   name: 'Abhinav Sunil',
