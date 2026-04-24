@@ -7,52 +7,66 @@ import pullImage from './pullImage';
 class javaExecutor implements codeExecutor {
   async execute(
     code: string,
-    inputTestCase: string
+    inputCase: string,
+    outputCase: string
   ): Promise<ExecutionResponse> {
-    const rawLogBuffer: Buffer[] = [];
-    console.log(`initialising docker container for java ....`);
-    await pullImage(JAVA_IMAGE);
+    let javaDockerContainer;
+    try {
+      const rawLogBuffer: Buffer[] = [];
+      console.log(`initialising docker container for java ....`);
+      await pullImage(JAVA_IMAGE);
 
-    const javaDockerContainer = await createContainer(JAVA_IMAGE, [
-      'bash',
-      '-c',
-      `cat <<EOF > Main.java
+      javaDockerContainer = await createContainer(JAVA_IMAGE, [
+        'bash',
+        '-c',
+        `cat <<EOF > Main.java
 ${code}
 EOF
 javac Main.java
-echo "${inputTestCase}" | java Main`,
-    ]);
-    await javaDockerContainer.start();
-    console.log(`starting the JAVA docker container`);
+echo "${inputCase}" | java Main`,
+      ]);
+      await javaDockerContainer.start();
+      console.log(`starting the JAVA docker container`);
 
-    const loggerStream = await javaDockerContainer.logs({
-      stderr: true,
-      stdout: true,
-      timestamps: false,
-      follow: true,
-    });
-    loggerStream.on('data', (chunk) => {
-      rawLogBuffer.push(chunk);
-    });
-    try {
+      const loggerStream = await javaDockerContainer.logs({
+        stderr: true,
+        stdout: true,
+        timestamps: false,
+        follow: true,
+      });
+      loggerStream.on('data', (chunk) => {
+        rawLogBuffer.push(chunk);
+      });
+      
       const codeResponse = await this.fecthDecodeStream(
         loggerStream,
         rawLogBuffer
       );
-      return {
-        output: codeResponse,
-        status: 'success',
-      };
+      if (inputCase != outputCase) {
+        return {
+          output: `Wrong Answer. Expected output: ${outputCase} but received ${codeResponse}`,
+          status: 'FAILED',
+        };
+      }
     } catch (error) {
       console.error(`error while executing code in docker container ${error}`);
       return {
         output: (error as Error).message,
-        status: 'error',
+        status: 'ERROR',
       };
     } finally {
-      await javaDockerContainer.stop();
-      await javaDockerContainer.remove();
+      if (javaDockerContainer) {
+        try {
+          await javaDockerContainer.remove({ force: true });
+        } catch (e) {
+          console.error('Error removing container', e);
+        }
+      }
     }
+    return {
+      output: 'All testcases passed',
+      status: 'SUCCESS',
+    };
   }
   fecthDecodeStream(
     loggerStream: NodeJS.ReadableStream,

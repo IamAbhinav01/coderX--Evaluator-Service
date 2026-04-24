@@ -1,5 +1,9 @@
 export default interface codeExecutor {
-  execute(code: string, inputTestCase: string): Promise<ExecutionResponse>;
+  execute(
+    code: string,
+    inputCase: string,
+    outputCase: string
+  ): Promise<ExecutionResponse>;
 }
 
 export type ExecutionResponse = {

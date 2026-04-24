@@ -7,53 +7,69 @@ import codeExecutor, { ExecutionResponse } from '../types/codeExecutor';
 class CPPExecutor implements codeExecutor {
   async execute(
     code: string,
-    inputTestCase: string
+    inputCase: string,
+    outputCase: string
   ): Promise<ExecutionResponse> {
-    const rawLogBuffer: Buffer[] = [];
-    console.log(`initialising docker container for cpp ...`);
+    let cppDockerContainer;
+    try {
+      const rawLogBuffer: Buffer[] = [];
+      console.log(`initialising docker container for cpp ...`);
 
-    await pullImage(CPP_IMAGE);
+      await pullImage(CPP_IMAGE);
 
-    const cppDockerContainer = await createContainer(CPP_IMAGE, [
-      'bash',
-      '-c',
-      `cat <<EOF > main.cpp
+      cppDockerContainer = await createContainer(CPP_IMAGE, [
+        'bash',
+        '-c',
+        `cat <<EOF > main.cpp
 ${code}
 EOF
 g++ main.cpp -o main
-printf "${inputTestCase}" | ./main`,
-    ]);
-    await cppDockerContainer.start();
-    console.log('started the CPP docker container');
+printf "${inputCase}" | ./main`,
+      ]);
+      await cppDockerContainer.start();
+      console.log('started the CPP docker container');
 
-    const loggerStream = await cppDockerContainer.logs({
-      stderr: true,
-      stdout: true,
-      timestamps: false,
-      follow: true,
-    });
-    loggerStream.on('data', (data) => {
-      rawLogBuffer.push(data);
-    });
-    try {
+      const loggerStream = await cppDockerContainer.logs({
+        stderr: true,
+        stdout: true,
+        timestamps: false,
+        follow: true,
+      });
+      loggerStream.on('data', (data) => {
+        rawLogBuffer.push(data);
+      });
+      
       const codeResponse = await this.fetchDecodeStream(
         loggerStream,
         rawLogBuffer
       );
-      return {
-        output: codeResponse,
-        status: 'success',
-      };
+      const actualOutput = codeResponse.toString().trim();
+      const expectedOutput = outputCase.toString().trim();
+      if (actualOutput !== expectedOutput) {
+        return {
+          output: `Wrong Answer. Expected output: ${expectedOutput} but received ${actualOutput}`,
+          status: 'FAILED',
+        };
+      }
     } catch (err) {
       console.error(`error while executing code in docker container ${err}`);
       return {
         output: (err as Error).message,
-        status: 'error',
+        status: 'ERROR',
       };
     } finally {
-      await cppDockerContainer.stop();
-      await cppDockerContainer.remove();
+      if (cppDockerContainer) {
+        try {
+          await cppDockerContainer.remove({ force: true });
+        } catch (e) {
+          console.error('Error removing container', e);
+        }
+      }
     }
+    return {
+      output: 'All testcases passed',
+      status: 'SUCCESS',
+    };
   }
   fetchDecodeStream(
     loggerStream: NodeJS.ReadableStream,

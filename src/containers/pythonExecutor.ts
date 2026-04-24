@@ -1,4 +1,3 @@
-import e from 'express';
 import { PYTHON_IMAGE } from '../utils/constants';
 import createContainer from './containerFactory';
 import decodeDockerStream from './dockerHelper';
@@ -8,53 +7,66 @@ import codeExecutor, { ExecutionResponse } from '../types/codeExecutor';
 class PythonExecutor implements codeExecutor {
   async execute(
     code: string,
-    inputTestCase: string
+    inputCase: string,
+    outputCase: string
   ): Promise<ExecutionResponse> {
-    const rawLogBuffer: Buffer[] = [];
-
-    console.log(`initialising new python docker container`);
-
-    await pullImage(PYTHON_IMAGE);
-
-    const pythonDockerContainer = await createContainer(PYTHON_IMAGE, [
-      'sh',
-      '-c',
-      `echo '${code}' > test.py && echo '${inputTestCase}' | python3 test.py`,
-    ]);
-
-    await pythonDockerContainer.start();
-    console.log(`started the docker container`);
-
-    const loggerStream = await pythonDockerContainer.logs({
-      stderr: true,
-      stdout: true,
-      timestamps: false,
-      follow: true,
-    });
-
-    loggerStream.on('data', (data) => {
-      rawLogBuffer.push(data);
-    });
-
+    let pythonDockerContainer;
     try {
+      const rawLogBuffer: Buffer[] = [];
+
+      console.log(`initialising new python docker container`);
+
+      await pullImage(PYTHON_IMAGE);
+
+      pythonDockerContainer = await createContainer(PYTHON_IMAGE, [
+        'sh',
+        '-c',
+        `echo '${code}' > test.py && echo '${inputCase}' | python3 test.py`,
+      ]);
+
+      await pythonDockerContainer.start();
+      console.log(`started the docker container`);
+
+      const loggerStream = await pythonDockerContainer.logs({
+        stderr: true,
+        stdout: true,
+        timestamps: false,
+        follow: true,
+      });
+
+      loggerStream.on('data', (data) => {
+        rawLogBuffer.push(data);
+      });
+
       const codeResponse = await this.fetchDecodeStream(
         loggerStream,
         rawLogBuffer
       );
-      return {
-        output: codeResponse,
-        status: 'success',
-      };
+      if (inputCase != outputCase) {
+        return {
+          output: `Wrong Answer. Expected output: ${outputCase} but received ${codeResponse}`,
+          status: 'FAILED',
+        };
+      }
     } catch (err) {
       console.error(`error while executing code in docker container ${err}`);
       return {
         output: (err as Error).message,
-        status: 'error',
+        status: 'ERROR',
       };
     } finally {
-      await pythonDockerContainer.stop();
-      await pythonDockerContainer.remove();
+      if (pythonDockerContainer) {
+        try {
+          await pythonDockerContainer.remove({ force: true });
+        } catch (e) {
+          console.error('Error removing container', e);
+        }
+      }
     }
+    return {
+      output: 'All testcases passed',
+      status: 'SUCCESS',
+    };
   }
 
   fetchDecodeStream(
