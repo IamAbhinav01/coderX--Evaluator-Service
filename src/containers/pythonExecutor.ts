@@ -42,7 +42,9 @@ class PythonExecutor implements codeExecutor {
         loggerStream,
         rawLogBuffer
       );
-      if (inputCase != outputCase) {
+      const actualOutput = codeResponse.toString().trim();
+      const expectedOutput = outputCase.toString().trim();
+      if (actualOutput !== expectedOutput) {
         return {
           output: `Wrong Answer. Expected output: ${outputCase} but received ${codeResponse}`,
           status: 'FAILED',

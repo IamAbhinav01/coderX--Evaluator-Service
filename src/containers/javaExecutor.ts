@@ -37,12 +37,14 @@ echo "${inputCase}" | java Main`,
       loggerStream.on('data', (chunk) => {
         rawLogBuffer.push(chunk);
       });
-      
+
       const codeResponse = await this.fecthDecodeStream(
         loggerStream,
         rawLogBuffer
       );
-      if (inputCase != outputCase) {
+      const actualOutput = codeResponse.toString().trim();
+      const expectedOutput = outputCase.toString().trim();
+      if (actualOutput !== expectedOutput) {
         return {
           output: `Wrong Answer. Expected output: ${outputCase} but received ${codeResponse}`,
           status: 'FAILED',
