@@ -39,12 +39,12 @@ ${testCase.input}
 INPUT_EOF`,
           ],
           128 * 1024 * 1024
-        ); // 128MB Limit
+        ); 
         await cppDockerContainer.start();
 
-        // ── TIMEOUT LOGIC ───────────────────────────────────────────────
-        // We give 10 seconds total for Compilation + Execution.
-        // The 'timeout 2s' inside the container handles the TLE for the binary.
+        
+        
+        
         const totalTimeout = 10000; 
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('TLE')), totalTimeout);
@@ -70,7 +70,7 @@ INPUT_EOF`,
             timeoutPromise,
           ])) as string;
           
-          // Check if the output contains a TLE indicator or if the container exited with 124
+          
           const inspect = await cppDockerContainer.wait();
           if (inspect.StatusCode === 124) {
             status = 'TLE';
@@ -87,7 +87,7 @@ INPUT_EOF`,
           }
         }
 
-        // ── OOM CHECK (MLE) ──────────────────────────────────────────────
+        
         const containerState = await cppDockerContainer.inspect();
         if (containerState.State.OOMKilled) {
           status = 'MLE';
@@ -138,7 +138,7 @@ INPUT_EOF`,
       loggerStream.on('end', () => {
         const completeBuffer = Buffer.concat(rawLogBuffer);
 
-        // console.log(completeBuffer.toString());
+        
 
         const decodedStream = decodeDockerStream(completeBuffer);
         console.log(decodedStream);

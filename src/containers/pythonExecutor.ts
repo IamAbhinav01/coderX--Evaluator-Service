@@ -33,12 +33,12 @@ EOF
 cat <<'INPUT_EOF' | timeout 2s python3 test.py
 ${testCase.input}
 INPUT_EOF`,
-        ], 100 * 1024 * 1024); // 100MB Limit
+        ], 100 * 1024 * 1024); 
 
         await pythonDockerContainer.start();
 
-        // ── TIMEOUT LOGIC ───────────────────────────────────────────────
-        const totalTimeout = 5000; // 5 seconds total
+        
+        const totalTimeout = 5000; 
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('TLE')), totalTimeout);
         });
@@ -80,7 +80,7 @@ INPUT_EOF`,
           }
         }
 
-        // ── OOM CHECK (MLE) ──────────────────────────────────────────────
+        
         const containerState = await pythonDockerContainer.inspect();
         if (containerState.State.OOMKilled) {
           status = 'MLE';
@@ -132,7 +132,7 @@ INPUT_EOF`,
       loggerStream.on('end', () => {
         const completeBuffer = Buffer.concat(rawLogBuffer);
 
-        // console.log(completeBuffer.toString());
+        
 
         const decodedStream = decodeDockerStream(completeBuffer);
         console.log(decodedStream);

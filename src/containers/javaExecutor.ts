@@ -31,11 +31,11 @@ EOF
 javac Main.java && cat <<'INPUT_EOF' | timeout 4s java Main
 ${testCase.input}
 INPUT_EOF`,
-        ], 256 * 1024 * 1024); // 256MB Limit
+        ], 256 * 1024 * 1024); 
         await javaDockerContainer.start();
 
-        // ── TIMEOUT LOGIC ───────────────────────────────────────────────
-        // We give 15 seconds total for Compilation + Execution.
+        
+        
         const totalTimeout = 15000; 
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('TLE')), totalTimeout);
@@ -77,7 +77,7 @@ INPUT_EOF`,
           }
         }
 
-        // ── OOM CHECK (MLE) ──────────────────────────────────────────────
+        
         const containerState = await javaDockerContainer.inspect();
         if (containerState.State.OOMKilled) {
           status = 'MLE';

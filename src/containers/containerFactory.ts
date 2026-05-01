@@ -3,7 +3,7 @@ import Docker from 'dockerode';
 async function createContainer(
   imgName: string,
   cmdExecutable: string[],
-  memoryLimit: number = 256 * 1024 * 1024 // Default 256MB
+  memoryLimit: number = 256 * 1024 * 1024 
 ) {
   const docker = new Docker();
   const container = await docker.createContainer({
@@ -16,7 +16,7 @@ async function createContainer(
     OpenStdin: true,
     HostConfig: {
       Memory: memoryLimit,
-      NanoCpus: 1000000000, // Limit to 1 CPU core
+      NanoCpus: 1000000000, 
     },
   });
   return container;
