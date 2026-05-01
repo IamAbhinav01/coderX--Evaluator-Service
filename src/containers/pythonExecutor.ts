@@ -2,72 +2,125 @@ import { PYTHON_IMAGE } from '../utils/constants';
 import createContainer from './containerFactory';
 import decodeDockerStream from './dockerHelper';
 import pullImage from './pullImage';
-import codeExecutor, { ExecutionResponse } from '../types/codeExecutor';
+import codeExecutor, { ExecutionResponse, TestCaseResult } from '../types/codeExecutor';
 
 class PythonExecutor implements codeExecutor {
   async execute(
     code: string,
-    inputCase: string,
-    outputCase: string
+    testCases: { input: string; output: string }[]
   ): Promise<ExecutionResponse> {
-    let pythonDockerContainer;
-    try {
-      const rawLogBuffer: Buffer[] = [];
+    const results: TestCaseResult[] = [];
+    let overallStatus: 'SUCCESS' | 'FAILED' | 'ERROR' | 'TLE' | 'MLE' = 'SUCCESS';
 
-      console.log(`initialising new python docker container`);
+    for (const testCase of testCases) {
+      let pythonDockerContainer;
+      let status: 'SUCCESS' | 'FAILED' | 'ERROR' | 'TLE' | 'MLE' = 'SUCCESS';
+      let actualOutput = '';
+      let errorMessage = '';
 
-      await pullImage(PYTHON_IMAGE);
+      try {
+        const rawLogBuffer: Buffer[] = [];
+        console.log(`initialising new python docker container for test case`);
 
-      pythonDockerContainer = await createContainer(PYTHON_IMAGE, [
-        'sh',
-        '-c',
-        `echo '${code}' > test.py && echo '${inputCase}' | python3 test.py`,
-      ]);
+        await pullImage(PYTHON_IMAGE);
 
-      await pythonDockerContainer.start();
-      console.log(`started the docker container`);
+        pythonDockerContainer = await createContainer(PYTHON_IMAGE, [
+          'sh',
+          '-c',
+          `cat <<'EOF' > test.py
+${code}
+EOF
+cat <<'INPUT_EOF' | timeout 2s python3 test.py
+${testCase.input}
+INPUT_EOF`,
+        ], 100 * 1024 * 1024); // 100MB Limit
 
-      const loggerStream = await pythonDockerContainer.logs({
-        stderr: true,
-        stdout: true,
-        timestamps: false,
-        follow: true,
-      });
+        await pythonDockerContainer.start();
 
-      loggerStream.on('data', (data) => {
-        rawLogBuffer.push(data);
-      });
+        // ── TIMEOUT LOGIC ───────────────────────────────────────────────
+        const totalTimeout = 5000; // 5 seconds total
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('TLE')), totalTimeout);
+        });
 
-      const codeResponse = await this.fetchDecodeStream(
-        loggerStream,
-        rawLogBuffer
-      );
-      const actualOutput = codeResponse.toString().trim();
-      const expectedOutput = outputCase.toString().trim();
-      if (actualOutput !== expectedOutput) {
-        return {
-          output: `Wrong Answer. Expected output: ${outputCase} but received ${codeResponse}`,
-          status: 'FAILED',
-        };
-      }
-    } catch (err) {
-      console.error(`error while executing code in docker container ${err}`);
-      return {
-        output: (err as Error).message,
-        status: 'ERROR',
-      };
-    } finally {
-      if (pythonDockerContainer) {
+        const executionPromise = (async () => {
+          const loggerStream = await pythonDockerContainer.logs({
+            stderr: true,
+            stdout: true,
+            timestamps: false,
+            follow: true,
+          });
+
+          loggerStream.on('data', (data) => {
+            rawLogBuffer.push(data);
+          });
+
+          return this.fetchDecodeStream(loggerStream, rawLogBuffer);
+        })();
+
         try {
-          await pythonDockerContainer.remove({ force: true });
-        } catch (e) {
-          console.error('Error removing container', e);
+          const codeResponse = (await Promise.race([
+            executionPromise,
+            timeoutPromise,
+          ])) as string;
+          
+          const inspect = await pythonDockerContainer.wait();
+          if (inspect.StatusCode === 124) {
+            status = 'TLE';
+          } else {
+            actualOutput = codeResponse.toString().trim();
+            const expectedOutput = testCase.output.toString().trim();
+            status = actualOutput === expectedOutput ? 'SUCCESS' : 'FAILED';
+          }
+        } catch (err: any) {
+          if (err.message === 'TLE') {
+            status = 'TLE';
+          } else {
+            throw err;
+          }
+        }
+
+        // ── OOM CHECK (MLE) ──────────────────────────────────────────────
+        const containerState = await pythonDockerContainer.inspect();
+        if (containerState.State.OOMKilled) {
+          status = 'MLE';
+        }
+
+        if (status !== 'SUCCESS' && overallStatus === 'SUCCESS') {
+          overallStatus = status;
+        }
+
+        results.push({
+          input: testCase.input,
+          expectedOutput: testCase.output,
+          actualOutput: actualOutput,
+          status: status,
+        });
+      } catch (err) {
+        console.error(`error while executing code in docker container ${err}`);
+        status = 'ERROR';
+        overallStatus = 'ERROR';
+        results.push({
+          input: testCase.input,
+          expectedOutput: testCase.output,
+          actualOutput: '',
+          status: 'ERROR',
+          error: (err as Error).message,
+        });
+      } finally {
+        if (pythonDockerContainer) {
+          try {
+            await pythonDockerContainer.remove({ force: true });
+          } catch (e) {
+            console.error('Error removing container', e);
+          }
         }
       }
     }
+
     return {
-      output: 'All testcases passed',
-      status: 'SUCCESS',
+      overallStatus,
+      results,
     };
   }
 

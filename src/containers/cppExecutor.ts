@@ -2,73 +2,132 @@ import { CPP_IMAGE } from '../utils/constants';
 import createContainer from './containerFactory';
 import pullImage from './pullImage';
 import decodeDockerStream from './dockerHelper';
-import codeExecutor, { ExecutionResponse } from '../types/codeExecutor';
+import codeExecutor, {
+  ExecutionResponse,
+  TestCaseResult,
+} from '../types/codeExecutor';
 
 class CPPExecutor implements codeExecutor {
   async execute(
     code: string,
-    inputCase: string,
-    outputCase: string
+    testCases: { input: string; output: string }[]
   ): Promise<ExecutionResponse> {
-    let cppDockerContainer;
-    try {
-      const rawLogBuffer: Buffer[] = [];
-      console.log(`initialising docker container for cpp ...`);
+    const results: TestCaseResult[] = [];
+    let overallStatus: 'SUCCESS' | 'FAILED' | 'ERROR' | 'TLE' | 'MLE' =
+      'SUCCESS';
 
-      await pullImage(CPP_IMAGE);
+    for (const testCase of testCases) {
+      let cppDockerContainer;
+      let status: 'SUCCESS' | 'FAILED' | 'ERROR' | 'TLE' | 'MLE' = 'SUCCESS';
+      let actualOutput = '';
 
-      cppDockerContainer = await createContainer(CPP_IMAGE, [
-        'bash',
-        '-c',
-        `cat <<EOF > main.cpp
+      try {
+        const rawLogBuffer: Buffer[] = [];
+        console.log(`initialising docker container for cpp ...`);
+        await pullImage(CPP_IMAGE);
+
+        cppDockerContainer = await createContainer(
+          CPP_IMAGE,
+          [
+            'bash',
+            '-c',
+            `cat <<'EOF' > main.cpp
 ${code}
 EOF
-g++ main.cpp -o main
-printf "${inputCase}" | ./main`,
-      ]);
-      await cppDockerContainer.start();
-      console.log('started the CPP docker container');
+g++ main.cpp -o main && cat <<'INPUT_EOF' | timeout 2s ./main
+${testCase.input}
+INPUT_EOF`,
+          ],
+          128 * 1024 * 1024
+        ); // 128MB Limit
+        await cppDockerContainer.start();
 
-      const loggerStream = await cppDockerContainer.logs({
-        stderr: true,
-        stdout: true,
-        timestamps: false,
-        follow: true,
-      });
-      loggerStream.on('data', (data) => {
-        rawLogBuffer.push(data);
-      });
-      
-      const codeResponse = await this.fetchDecodeStream(
-        loggerStream,
-        rawLogBuffer
-      );
-      const actualOutput = codeResponse.toString().trim();
-      const expectedOutput = outputCase.toString().trim();
-      if (actualOutput !== expectedOutput) {
-        return {
-          output: `Wrong Answer. Expected output: ${expectedOutput} but received ${actualOutput}`,
-          status: 'FAILED',
-        };
-      }
-    } catch (err) {
-      console.error(`error while executing code in docker container ${err}`);
-      return {
-        output: (err as Error).message,
-        status: 'ERROR',
-      };
-    } finally {
-      if (cppDockerContainer) {
+        // ── TIMEOUT LOGIC ───────────────────────────────────────────────
+        // We give 10 seconds total for Compilation + Execution.
+        // The 'timeout 2s' inside the container handles the TLE for the binary.
+        const totalTimeout = 10000; 
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('TLE')), totalTimeout);
+        });
+
+        const executionPromise = (async () => {
+          const loggerStream = await cppDockerContainer.logs({
+            stderr: true,
+            stdout: true,
+            timestamps: false,
+            follow: true,
+          });
+          loggerStream.on('data', (data) => {
+            rawLogBuffer.push(data);
+          });
+
+          return this.fetchDecodeStream(loggerStream, rawLogBuffer);
+        })();
+
         try {
-          await cppDockerContainer.remove({ force: true });
-        } catch (e) {
-          console.error('Error removing container', e);
+          const codeResponse = (await Promise.race([
+            executionPromise,
+            timeoutPromise,
+          ])) as string;
+          
+          // Check if the output contains a TLE indicator or if the container exited with 124
+          const inspect = await cppDockerContainer.wait();
+          if (inspect.StatusCode === 124) {
+            status = 'TLE';
+          } else {
+            actualOutput = codeResponse.toString().trim();
+            const expectedOutput = testCase.output.toString().trim();
+            status = actualOutput === expectedOutput ? 'SUCCESS' : 'FAILED';
+          }
+        } catch (err: any) {
+          if (err.message === 'TLE') {
+            status = 'TLE';
+          } else {
+            throw err;
+          }
+        }
+
+        // ── OOM CHECK (MLE) ──────────────────────────────────────────────
+        const containerState = await cppDockerContainer.inspect();
+        if (containerState.State.OOMKilled) {
+          status = 'MLE';
+        }
+
+        if (status !== 'SUCCESS' && overallStatus === 'SUCCESS') {
+          overallStatus = status;
+        }
+
+        results.push({
+          input: testCase.input,
+          expectedOutput: testCase.output,
+          actualOutput: actualOutput,
+          status: status,
+        });
+      } catch (err) {
+        console.error(`error while executing code in docker container ${err}`);
+        status = 'ERROR';
+        overallStatus = 'ERROR';
+        results.push({
+          input: testCase.input,
+          expectedOutput: testCase.output,
+          actualOutput: '',
+          status: 'ERROR',
+          error: (err as Error).message,
+        });
+      } finally {
+        if (cppDockerContainer) {
+          try {
+            await cppDockerContainer.remove({ force: true });
+          } catch (e) {
+            console.error('Error removing container', e);
+          }
         }
       }
     }
+
     return {
-      output: 'All testcases passed',
-      status: 'SUCCESS',
+      overallStatus,
+      results,
     };
   }
   fetchDecodeStream(
