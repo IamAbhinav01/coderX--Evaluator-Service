@@ -1,7 +1,9 @@
 import { Job } from 'bullmq';
 import { IJob } from '../types/bullMqJobDefinition';
 import { SubmissionPayload } from '../types/submissionPayload';
-import createExecutor from '../utils/ExecutorFactory';
+import createExecutor from '../utils/executorFactory';
+import evaluationQueue from '../queues/evaluationQueue';
+import evaluationQueueProducer from '../producers/evaluationQueueProducer';
 
 export default class SubmissionJob implements IJob {
   name: string;
@@ -27,6 +29,12 @@ export default class SubmissionJob implements IJob {
 
       if (strategy != null) {
         const response = await strategy.execute(code, inputCase, outputCase);
+        evaluationQueueProducer({
+          response,
+          userId: this.payload[key].userId,
+          submissionId: this.payload[key].submissionId,
+        });
+
         if (response.status === 'SUCCESS') {
           console.log('code executed successfully');
           console.log(response);
@@ -34,6 +42,7 @@ export default class SubmissionJob implements IJob {
           console.log('Something went wrong with code execution');
           console.log(response);
         }
+
         return response;
       }
 
