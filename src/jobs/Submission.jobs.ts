@@ -1,9 +1,9 @@
 import { Job } from 'bullmq';
-import { IJOB } from '../types/bullMQJobDefinition';
+import { IJob } from '../types/bullMqJobDefinition';
 import { SubmissionPayload } from '../types/submissionPayload';
-import createExecutor from '../utils/executorFactory';
+import createExecutor from '../utils/ExecutorFactory';
 
-export default class SubmissionJob implements IJOB {
+export default class SubmissionJob implements IJob {
   name: string;
   payload?: Record<string, SubmissionPayload>;
   constructor(payload: Record<string, SubmissionPayload>) {
