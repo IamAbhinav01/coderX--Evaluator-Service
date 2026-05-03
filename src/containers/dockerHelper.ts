@@ -1,18 +1,18 @@
 import DockerStreamOutput from '../types/dockerStream';
 import { HEADER_SIZE } from '../utils/constants';
 
-// Docker does not send stdout and stderr as
-// plain text — it sends a multiplexed binary stream.
 
-// DOCKER INTERNALLY SENDS OUTPUT AS A
-// [HEADER][DATA][HEADER][DATA][HEADER][DATA]
 
-// 1 → stdout
 
-// 2 → stderr
 
-// Docker mixes both streams in one binary buffer,
-//  and we must decode it manually.
+
+
+
+
+
+
+
+
 
 function decodeDockerStream(buffer: Buffer): DockerStreamOutput {
   let offset = 0;

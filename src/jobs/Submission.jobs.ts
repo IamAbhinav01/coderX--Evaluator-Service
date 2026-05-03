@@ -1,7 +1,9 @@
 import { Job } from 'bullmq';
 import { IJob } from '../types/bullMqJobDefinition';
 import { SubmissionPayload } from '../types/submissionPayload';
-import createExecutor from '../utils/ExecutorFactory';
+import createExecutor from '../utils/executorFactory';
+import evaluationQueue from '../queues/evaluationQueue';
+import evaluationQueueProducer from '../producers/evaluationQueueProducer';
 
 export default class SubmissionJob implements IJob {
   name: string;
@@ -18,22 +20,28 @@ export default class SubmissionJob implements IJob {
       const key = Object.keys(this.payload)[0];
       const codeLanguage = this.payload[key].language?.toString().trim();
       const code = this.payload[key].code;
-      const inputCase = this.payload[key].inputCase;
-      const outputCase = this.payload[key].outputCase;
+      const testCases = this.payload[key].testCases;
       console.log(job.name, job.id, job.data);
       console.log('normalized language:', codeLanguage);
       const strategy = createExecutor(codeLanguage);
       console.log('Strategy called is : ', strategy);
 
       if (strategy != null) {
-        const response = await strategy.execute(code, inputCase, outputCase);
-        if (response.status === 'SUCCESS') {
+        const response = await strategy.execute(code, testCases);
+        evaluationQueueProducer({
+          response,
+          userId: this.payload[key].userId,
+          submissionId: this.payload[key].submissionId,
+        });
+
+        if (response.overallStatus === 'SUCCESS') {
           console.log('code executed successfully');
           console.log(response);
         } else {
           console.log('Something went wrong with code execution');
           console.log(response);
         }
+
         return response;
       }
 

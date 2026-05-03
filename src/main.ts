@@ -17,6 +17,6 @@ app.use('/admin/queues', serverAdapter.getRouter());
 app.listen(serverConfig.PORT, async () => {
   console.log(`Server started at ${serverConfig.PORT}`);
 
-  // Start the worker to consume jobs from SubmissionQueue
+  
   SubmissionWorker('SubmissionQueue');
 });
